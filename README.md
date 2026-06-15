@@ -1,6 +1,6 @@
 # Vector.js
 
-**Version:** 0.0.1 — 15th June, 2026
+**Version:** 0.0.2 — 15th June, 2026
 
 **Author:** Satyam Verma — [github.com/SatyamV7](https://github.com/SatyamV7)
 
