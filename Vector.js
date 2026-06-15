@@ -125,7 +125,7 @@ export class Vector {
     }
 
     push(v) {
-        if (this.#length >= this.capacity) {
+        if (this.#length >= this.#buffer.length) {
             this.#buffer = Vector.#realloc(this.#buffer);
         }
         this.#buffer[this.#length++] = v;
