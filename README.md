@@ -119,7 +119,7 @@ const last = v.pop();
 Reads or writes the element at `address`.
 
 - With one argument, returns the value at `address`.
-- With two arguments, writes `pointee` to `address` and returns the written value.
+- With two arguments, writes `pointee` to `address` and returns the input value as-is.
 
 > **Warning:** `at` performs no bounds checking. It is the caller's responsibility to ensure `address` is a valid index within `[0, length)`. Access outside this range is not trapped — reads may return indeterminate values and writes produce undefined behaviour with respect to the vector's logical state. This is by design; callers who have already established index validity should not pay for redundant validation. If bounds checking is required, it must be applied at the call site (see [Call-Site Safety](#call-site-safety)).
 
