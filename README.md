@@ -60,14 +60,22 @@ const v2 = new Vector(new Uint8Array([1, 2, 3, 4]));
 ### Properties
 
 #### `length` *(getter)*
-Returns the number of elements currently held in the vector.
+Returns the number of elements in the vector.
+
+`length` is always less than or equal to `capacity`.
 
 ```js
 v.length; // e.g. 5
 ```
 
 #### `length` *(setter)*
-Resizes the vector to exactly the specified value. New slots introduced by growth are zero-initialised. Equivalent to calling `resize(n)`.
+Resizes the vector to contain exactly the specified number of elements.
+
+If current `length` is greater than the specified value, the vector is reduced to first specified no of elements.
+
+If current `length` is less than the specified value, new slots are appended and zero-initialised.
+
+Equivalent to calling `resize(n)`.
 
 ```js
 v.length = 10;
@@ -85,6 +93,11 @@ Returns a direct reference to the internal TypedArray buffer, inclusive of any r
 
 > **Warning:** The buffer exposed by `pointer` spans the full allocated capacity, not just the active region. Reads beyond `length` produce indeterminate values. Writes are reflected inside the Vector. Use `data()` for a bounded view of the active region only.
 
+> **Note:** The `pointer` property is read-only. The underlying buffer may be reallocated at any time, invalidating any previously obtained reference. Callers must not retain references to the buffer across operations that may trigger a reallocation (e.g., `push`, `insert`, `resize`, etc.).
+
+> **Note:** The active region is defined as the contiguous range of elements `[0, length)`. 
+> **Note:** The reserved region is defined as the contiguous range of elements `[length, capacity)`.
+
 ```js
 v.pointer; // e.g. Float32Array(16) [...]
 ```
@@ -96,6 +109,14 @@ v.pointer; // e.g. Float32Array(16) [...]
 #### `push(v)`
 Appends a single value to the end of the vector, reallocating if necessary.
 
+Reallocation takes place if `length` is equal to `capacity`. The new capacity is determined by the growth strategy described in [Capacity Growth](#capacity-growth).
+
+Returns `undefined`.
+
+No failure conditions exist for `push`.
+
+`v` may be a number or BigInt, as per the TypedArray's element kind. The value is subject to the TypedArray's own numeric coercion semantics.
+
 ```js
 v.push(42);
 ```
@@ -105,7 +126,9 @@ v.push(42);
 ---
 
 #### `pop()`
-Removes and returns the last element. Returns `null` if the vector is empty.
+Removes the last element of the vector and returns its value, if the vector is not empty i.e, `length` is greater than zero.
+
+Fails if the vector is empty, i.e. `length` is equal to zero, returning `null` in failure condition.
 
 ```js
 const last = v.pop();
@@ -118,8 +141,10 @@ const last = v.pop();
 #### `at(address, pointee?)`
 Reads or writes the element at `address`.
 
-- With one argument, returns the value at `address`.
-- With two arguments, writes `pointee` to `address` and returns the input value as-is.
+- With `pointee` argument absent, returns the value at `address` index.
+- With `pointee` argument present, writes `pointee` to `address` and returns the input value as-is.
+
+Note that `pointee` (if provided) may be coerced to the vector's element type when writing at given `address`, also returned value (same as `pointee`, the input value) may not be equal to value written to the vector, due to TypedArray numeric coercion semantics.
 
 > **Warning:** `at` performs no bounds checking. It is the caller's responsibility to ensure `address` is a valid index within `[0, length)`. Access outside this range is not trapped — reads may return indeterminate values and writes produce undefined behaviour with respect to the vector's logical state. This is by design; callers who have already established index validity should not pay for redundant validation. If bounds checking is required, it must be applied at the call site (see [Call-Site Safety](#call-site-safety)).
 
@@ -135,12 +160,18 @@ v.at(0, 3.14);    // write, returns 3.14
 #### `insert(address, pointee)`
 Inserts one or more elements at `address`, shifting all subsequent elements rightward.
 
-- If `pointee` is a scalar, a single element is inserted.
-- If `pointee` is a TypedArray of the same element type as the vector, the entire array is inserted as a contiguous block.
+- If `pointee` is a number/BigInt (as per the TypedArray's element kind), pointee's value is inserted, and the value inserted is subject to the TypedArray's own numeric coercion semantics.
+- If `pointee` is a TypedArray of the same element kind as the vector, the entire array is inserted as a contiguous block.
 
-Returns `null` if `address` is out of the range `[0, length]`. An `address` equal to `length` is valid and is equivalent to appending.
+Reallocation takes place if necessary, using the growth strategy described in [Capacity Growth](#capacity-growth).
 
-> Passing a TypedArray of a **different** element type than the vector's buffer falls through to the scalar insertion path. Only the value assigned to `address` is inserted, subject to the TypedArray's own numeric coercion semantics.
+Fails if `address` is outside the valid range `[0, length]`, returning `null` in failure condition.
+
+An `address` equal to `length` is valid and is equivalent to appending.
+
+Returns `undefined` on success.
+
+> Passing a TypedArray of a **different** element kind than the vector's buffer falls through to the scalar insertion path. Only the value assigned to `address` is inserted, subject to the TypedArray's own numeric coercion semantics.
 
 ```js
 v.insert(2, 99);
@@ -152,9 +183,13 @@ v.insert(0, new Float32Array([1.0, 2.0, 3.0]));
 ---
 
 #### `delete(address, length?)`
-Removes `length` consecutive elements beginning at `address`, shifting subsequent elements leftward. `length` defaults to `1`.
+Removes `length` consecutive elements beginning at `address`, shifting subsequent elements leftward.
 
-Returns `null` if `address` or `address + length - 1` falls outside `[0, length)`, or if `length` is less than 1.
+Value of `length` parameter defaults to `1` and is expected to be a integer greater than or equal to 1.
+
+Fails if `address` or `address + length - 1` falls outside active region, or if `length` is less than 1, returning `null` in failure condition.
+
+Returns `undefined` on success.
 
 ```js
 v.delete(2);     // remove one element at index 2
@@ -168,6 +203,12 @@ v.delete(2, 3);  // remove elements at indices 2, 3, and 4
 #### `append(T)`
 Appends all elements of a TypedArray `T` to the end of the vector, reallocating if necessary.
 
+T is expected to have the same element kind as the vector's buffer. If `T` has a different element kind, the values are casted to the vector's element type according to the TypedArray's own numeric coercion semantics.
+
+No failure conditions exist for `append`.
+
+Returns `undefined`.
+
 ```js
 v.append(new Uint8Array([10, 20, 30]));
 ```
@@ -177,7 +218,19 @@ v.append(new Uint8Array([10, 20, 30]));
 ---
 
 #### `resize(n)`
-Resizes the vector to exactly `n` elements. New slots introduced by growth are zero-initialised. Shrinking moves the logical length boundary without modifying existing element storage.
+Resizes the vector to contain exactly the `n` number of elements.
+
+If current `length` is greater than `n`, the vector is reduced to first `n` elements.
+
+If current `length` is less than `n`, new slots are appended and zero-initialised.
+
+May trigger a reallocation if `n` exceeds current `capacity`. The new capacity is determined by the growth strategy described in [Capacity Growth](#capacity-growth).
+
+If `n` is not an integer or is negative or is equal to `length`, the operation is a no-op and returns `undefined`.
+
+Returns `undefined`.
+
+There is no failure condition for `resize`, instead it is a no-op if `n` is invalid or equal to current `length`.
 
 ```js
 v.resize(20);
@@ -188,7 +241,17 @@ v.resize(20);
 ---
 
 #### `reserve(n)`
-Ensures the vector can hold at least `n` elements without reallocation. Has no effect if current capacity is already sufficient. Does not alter `length`.
+Increase the capacity of the vector (the total number of elements that the vector can hold without requiring reallocation) to a value that's greater or equal to `n`.
+
+If `n` is greater than the current capacity(), new storage is allocated, otherwise the function does nothing.
+
+reserve() does not change the `length` of the vector.
+
+Reallocations are usually costly operations in terms of performance. The reserve() function can be used to eliminate reallocations if the number of elements is known beforehand.
+
+No failure conditions exist for `reserve`.
+
+Returns `undefined`.
 
 ```js
 v.reserve(10_000);
@@ -199,18 +262,30 @@ v.reserve(10_000);
 ---
 
 #### `shrink_to_fit()`
-Reallocates the backing buffer to exactly `length` elements, releasing surplus capacity. A no-op if capacity already equals `length`.
+Reallocates the backing buffer to exactly `length` elements, releasing surplus capacity. A no-op if `capacity` already equals `length`.
+
+No failure conditions exist for `shrink_to_fit` but is a no-op if `length` is equal to `capacity`.
+
+Returns `undefined`.
 
 ```js
 v.shrink_to_fit();
 ```
 
-**Complexity:** O(n).
+**Complexity:** O(n) if reallocation is required; O(1) otherwise.
 
 ---
 
 #### `data()`
 Returns a TypedArray view over the active region `[0, length)`. The view is live — mutations are reflected in the Vector.
+
+The view is invalidated by any operation that reallocates the backing buffer (e.g., `push`, `insert`, `resize`, etc.). Callers must not retain references to the view across such operations.
+
+Changes to vector's `length` are not reflected in the view. The view's `length` is fixed at the time of creation.
+
+No failure conditions exist for `data`.
+
+Returns a TypedArray of the same element kind as the vector's buffer, with `length` equal to the vector's `length` at the time of creation.
 
 ```js
 const view = v.data();
@@ -222,6 +297,12 @@ const view = v.data();
 
 #### `[Symbol.iterator]()`
 Iterates over the active region. Compatible with `for...of`, spread syntax, and destructuring.
+
+Iterators are invalidated by any operation that reallocates the backing buffer (e.g., `push`, `insert`, `resize`, etc.). Callers must not retain references to the iterator across such operations.
+
+Iterators go stale if the vector's `length` is changed after the iterator is created by mutating operations. Iteration continues until the `length` at the time of iterator creation is reached, even if the vector's `length` is subsequently changed. Iterators loop over live data, so changes to the vector's contents are reflected in the iterator.
+
+Read-only operations do not invalidate or make iterators go stale.
 
 ```js
 for (const x of v) console.log(x);
@@ -321,4 +402,4 @@ v2.shrink_to_fit();
 
 ## License
 
-Reciprocal Public License 1.5 (RPL-1.5). See [https://opensource.org/licenses/RPL-1.5](https://opensource.org/licenses/RPL-1.5) for full terms.
+The Vector.js library is licensed under the terms of the Reciprocal Public License 1.5 (RPL1.5). See LICENSE.txt for more information.

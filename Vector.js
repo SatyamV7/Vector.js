@@ -1,6 +1,6 @@
 // Vector.js v0.0.2 <15th June, 2026> - Author: Satyam Verma <github.com/SatyamV7> - License: RPL-1.5
 
-export class Vector {
+export default class Vector {
     #buffer;
     #length = 0;
 
@@ -144,7 +144,7 @@ export class Vector {
         //     return null;
         // }
         if (pointee !== undefined) {
-            return this.#buffer[address] = pointee;
+            return (this.#buffer[address] = pointee);
         }
         return this.#buffer[address];
     }
