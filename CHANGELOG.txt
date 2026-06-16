@@ -5,3 +5,7 @@ v0.0.1 <https://github.com/SatyamV7/Vector.js/commit/993e9565708b97c4837f673a584
 v0.0.2 <https://github.com/SatyamV7/Vector.js/commit/0bc473d30a34b6ead0726a8a641175fe3dc212f4>:
 
 - Modified `at()` method implementation to return the `pointee` value as is, instead of falling through and re-reading just written value at specified `address`. This changes what value is returned on successful write if `pointee` is coerced to a different value by the TypedArray.
+
+v0.0.3 <https://github.com/SatyamV7/Vector.js/commit/41062b8ccaff448b5d350cc08f8a0a18d8160414>:
+
+- Fixed bug in `resize()` method, where the default value used to zero-initialize memory was `0`, which caused issues for BigInt64Array and BigUint64Array backed vectors. Now the default value for those types is set to `0n`, ensuring proper initialization. Other types are unaffected and still default to `0`.
