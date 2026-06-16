@@ -1,8 +1,9 @@
-// Vector.js v0.0.2 <15th June, 2026> - Author: Satyam Verma <github.com/SatyamV7> - License: RPL-1.5
+// Vector.js v0.0.3 <16th June, 2026> - Author: Satyam Verma <github.com/SatyamV7> - License: RPL-1.5
 
 export default class Vector {
     #buffer;
     #length = 0;
+    #NULL = 0;
 
     static #TypedArray = Object.getPrototypeOf(Uint8Array);
 
@@ -29,6 +30,13 @@ export default class Vector {
             throw new TypeError(
                 "Expected a TypedArray View or a TypedArray constructor"
             );
+        }
+
+        if (
+            this.#buffer instanceof BigInt64Array ||
+            this.#buffer instanceof BigUint64Array
+        ) {
+            this.#NULL = 0n;
         }
     }
 
@@ -60,6 +68,7 @@ export default class Vector {
     #resize(x, ZeroInit = true) {
         if (!Number.isInteger(x)) return;
         if (x < 0 || x === this.#length) return;
+        const $0 = this.#NULL;
         if (x > this.#length) {
             const c = Math.min(x, this.#buffer.length);
             if (x > this.#buffer.length) {
@@ -69,10 +78,10 @@ export default class Vector {
                 );
             }
             if (ZeroInit) {
-                this.#buffer.fill(0, this.#length, c);
+                this.#buffer.fill($0, this.#length, c);
             }
         } /* else {
-            this.#buffer.fill(0, this.#length, x);
+            this.#buffer.fill($0, this.#length, x);
         } */
         this.#length = x;
     }
