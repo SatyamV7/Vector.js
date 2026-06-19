@@ -9,3 +9,7 @@ v0.0.2 <https://github.com/SatyamV7/Vector.js/commit/0bc473d30a34b6ead0726a8a641
 v0.0.3 <https://github.com/SatyamV7/Vector.js/commit/41062b8ccaff448b5d350cc08f8a0a18d8160414>:
 
 - Fixed bug in `resize()` method, where the default value used to zero-initialize memory was `0`, which caused issues for BigInt64Array and BigUint64Array backed vectors. Now the default value for those types is set to `0n`, ensuring proper initialization. Other types are unaffected and still default to `0`.
+
+v0.0.4 <https://github.com/SatyamV7/Vector.js/commit/1c4dee9dc291aef12ca311fff76c3e5307a5b9b8>:
+
+- Added new `I` parameter to the constructor, allowing users to configure the initial state of the vector.
