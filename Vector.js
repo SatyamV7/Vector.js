@@ -61,12 +61,13 @@ export default class Vector {
             );
         }
 
-        if (
-            this.#buffer instanceof BigInt64Array ||
-            this.#buffer instanceof BigUint64Array
-        ) {
-            this.#NULL = 0n;
-        }
+        const buffer = !this.#buffer.length
+            ? new this.#buffer.constructor(
+                  new ArrayBuffer(this.#buffer.BYTES_PER_ELEMENT)
+              )
+            : this.#buffer;
+
+        this.#NULL = buffer[0] ^ buffer[0];
     }
 
     get length() {
