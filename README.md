@@ -1,6 +1,6 @@
 # Vector.js
 
-**Version:** 0.0.3 — 16th June, 2026
+**Version:** 0.0.4 — 19th June, 2026
 
 **Author:** Satyam Verma — [github.com/SatyamV7](https://github.com/SatyamV7)
 
@@ -37,22 +37,87 @@ import Vector from './Vector.js';
 
 ```js
 new Vector(T)
+new Vector(T, I)
 ```
 
-`T` may be either:
+### Parameters
 
-- A **TypedArray constructor** (e.g. `Float32Array`) — allocates a new empty buffer with an initial capacity of 8 elements.
-- An **existing TypedArray instance** — adopted directly as the backing buffer. The vector's `length` is set to the instance's `length`.
+#### `T`
 
-Any other value throws a `TypeError`. This is the only method in the API that throws.
+`T` determines the element kind and the initial buffer of the vector. It must be one of:
 
-***Example***:
+- A **TypedArray constructor** (e.g. `Float32Array`) — a new backing buffer is allocated. The initial capacity is determined by the `I.capacity` field (see below); when `I` is omitted, the default capacity is `8`. The initial `length` is determined by the `I.length` field (see below); when `I` is omitted, `length` is initialised to `0`.
+- An **existing TypedArray instance** — the instance is adopted as the backing buffer. The initial `length` is determined by the `I.length` field (see below); when `I` is omitted, `length` is initialised to the instance's own `length`. The vector's `capacity` is equal to the instance's `length`.
+
+Any other value throws a `TypeError`.
+
+#### `I` *(optional)*
+
+`I` is expected to be an object that configures the initial state of the vector. When supplied, it must be a non-`null` object; passing any other type (including `null`) throws a `TypeError`.
+
+All fields of `I` are optional. Unrecognised fields are ignored. The following fields are defined:
+
+---
+
+##### `I.capacity`
+
+Specifies the initial capacity — the total number of elements the vector can hold before a reallocation is required.
+
+- Applicable only when `T` is a **TypedArray constructor**. This field has no defined effect when `T` is an existing TypedArray instance.
+- Must be a non-negative integer. Any other value throws a `RangeError`.
+- When omitted, the default initial capacity is `8`.
+
+---
+
+##### `I.length`
+
+Specifies the initial length — the number of elements considered logically present in the vector at construction time.
+
+- Must be a non-negative integer. Any other value throws a `RangeError`.
+- When `T` is a **TypedArray constructor**: `I.length` must be less than or equal to `I.capacity` (or the default capacity of `8` if `I.capacity` is omitted). Any other value throws a `RangeError`. When omitted, `length` defaults to `0`.
+- When `T` is a **TypedArray instance**: `I.length` must be less than or equal to the instance's own `length`. Any other value throws a `RangeError`. When omitted, `length` defaults to the instance's own `length`.
+
+> **Note:** Setting `I.length` to a value less than the buffer's populated region does not clear or zero the elements beyond `I.length`. Those elements reside in the reserved region and their values are indeterminate from the perspective of this specification.
+
+---
+
+### Failure Conditions
+
+| Condition | Error type |
+|---|---|
+| `T` is not a TypedArray constructor or TypedArray instance | `TypeError` |
+| `I` is supplied but is not a non-`null` object | `TypeError` |
+| `I.capacity` is supplied but is not a non-negative integer | `RangeError` |
+| `I.length` is supplied but is not a non-negative integer, or exceeds the applicable upper bound | `RangeError` |
+
+The constructor is the only point in the API that throws.
+
+---
+
+### Buffer Ownership
+
+When `T` is an existing TypedArray instance, the Vector takes ownership of the underlying buffer. The caller must not retain references to the passed TypedArray after construction, as subsequent reallocations will detach its buffer.
+
+---
+
+### Examples
+
 ```js
-const v = new Vector(Float32Array);
-const v2 = new Vector(new Uint8Array([1, 2, 3, 4]));
-```
+// Construct from a TypedArray constructor with default capacity and length
+const v1 = new Vector(Float32Array);
 
-> **Note:** When constructing from an existing TypedArray instance, the Vector takes ownership of the underlying buffer. The caller must not retain references to the passed TypedArray after construction, as subsequent reallocations will detach its buffer.
+// Construct with an explicit initial capacity
+const v2 = new Vector(Uint32Array, { capacity: 64 });
+
+// Construct with an explicit initial capacity and length
+const v3 = new Vector(Int16Array, { capacity: 64, length: 16 });
+
+// Construct from an existing TypedArray instance; length defaults to instance length
+const v4 = new Vector(new Uint8Array([1, 2, 3, 4]));
+
+// Construct from an existing instance with a reduced initial length
+const v5 = new Vector(new Uint8Array([1, 2, 3, 4]), { length: 2 });
+```
 
 ---
 
@@ -163,6 +228,24 @@ v.at(0, 3.14);    // write, returns 3.14
 ```
 
 **Complexity:** O(1).
+
+#### Indeterminate value
+
+A value returned by a read operation for which this specification imposes no constraint on content.
+
+- The returned value *shall* be a valid, well-defined value of the vector's element type or `undefined`, as produced deterministically by the underlying TypedArray read. It is never unspecified at the engine level, uninitialised, or unsafe to obtain.
+- This specification does not constrain *which* such value is returned. The value *may* depend on implementation details not described herein, and such details *shall not* be relied upon, including where observed to be stable across calls or releases.
+- A future revision *may* alter the indeterminate value produced by a given operation without this being considered a breaking change.
+
+#### Undefined behaviour
+
+The absence of any constraint, imposed by this specification, on the effect of a write operation upon Vector's tracked invariants (`length`, `capacity`, the active/reserved boundary), when that operation is performed outside the bounds of its documented contract.
+
+- The underlying write *shall* remain memory-safe and fully defined at the engine level for every address, in accordance with the ECMAScript specification, irrespective of this clause.
+- This clause constrains only the logical state guarantees made by Vector. It does not relax, nor refer to, memory safety at the level of the host engine.
+- No conforming implementation, nor any caller, *shall* infer reachability or unreachability of any code path on the basis of this clause.
+
+> **Note:** These terms bound the guarantees made by *this* specification; they do not describe properties of the underlying runtime, which remains fully deterministic and memory-safe in all cases. Where this document is silent, behaviour is unspecified by Vector — not unsafe, and not unknown to the engine.
 
 ---
 
@@ -334,7 +417,7 @@ Vector grows using a **capacity-doubling** strategy, starting from an initial ca
 
 | Operation | Resulting capacity |
 |---|---|
-| `push` / scalar `insert` when full | `max(current × 2, 8)` |
+| `push` / scalar `insert` when full | `current × 2 || 8` |
 | `reserve(n)` | `max(n, current × 2)` |
 | `resize(n)` / `length = n` when growing | `max(n, current × 2)` |
 | `shrink_to_fit()` | exactly `length` |
@@ -349,13 +432,16 @@ With the exception of the constructor, Vector does not throw. Failed operations 
 
 | Operation | Failure condition | Return value |
 |---|---|---|
-| `constructor(T)` | Invalid `T` | throws `TypeError` |
+| `constructor(T, I)` | Invalid `T` | throws `TypeError` |
+| `constructor(T, I)` | `I` is not a non-`null` object | throws `TypeError` |
+| `constructor(T, I)` | `I.capacity` is not a non-negative integer | throws `RangeError` |
+| `constructor(T, I)` | `I.length` is not a non-negative integer or exceeds its upper bound | throws `RangeError` |
 | `insert(address, ...)` | `address` out of `[0, length]` | `null` |
 | `delete(address, length)` | Either bound out of range, or `length < 1` | `null` |
 | `pop()` | Vector is empty | `null` |
 | `at(address, ...)` | *(no check performed)* | indeterminate if out of bounds |
 
-Callers that need to distinguish a valid `null` element from an error sentinel should validate inputs prior to calling.
+> **Note:** With the exception of the constructor, Vector does not throw, but the underlying TypedArray may throw, likely due to coercion issues when using Vector's backed by BigInt64Array or BigUint64Array. Such exceptions are not explicitly documented as part of the Vector API, but may occur if input values are incompatible with the vector's element type. Also if detached ArrayBuffer backed views are passed to `constructor`, `insert`, or `append`, the methods may throw.
 
 ---
 
@@ -382,39 +468,6 @@ function checkedInsert(vec, address, pointee) {
 ```
 
 This pattern ensures that validation overhead is borne only by the callers that require it, and is absent from call sites where inputs have already been established as valid.
-
----
-
-## Examples
-
-```js
-// Basic usage
-const v = new Vector(Float32Array);
-v.push(1.0);
-v.push(2.0);
-v.push(3.0);
-console.log([...v]); // [1, 2, 3]
-
-// Pre-allocate before a known workload
-const v2 = new Vector(Uint32Array);
-v2.reserve(10_000);
-for (let i = 0; i < 10_000; i++) v2.push(i);
-
-// Bulk insert
-const v3 = new Vector(new Int16Array([10, 20, 50, 60]));
-v3.insert(2, new Int16Array([30, 40]));
-console.log([...v3]); // [10, 20, 30, 40, 50, 60]
-
-// Construct from existing data
-const raw = new Float64Array([3.14, 2.71, 1.41]);
-const v4 = new Vector(raw);
-v4.push(1.73);
-console.log([...v4]); // [3.14, 2.71, 1.41, 1.73]
-
-// Release surplus capacity after bulk work
-v2.shrink_to_fit();
-```
-
 ---
 
 ## License

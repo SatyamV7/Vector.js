@@ -1,4 +1,4 @@
-// Vector.js v0.0.3 <16th June, 2026> - Author: Satyam Verma <github.com/SatyamV7> - License: RPL-1.5
+// Vector.js v0.0.4 <19th June, 2026> - Author: Satyam Verma <github.com/SatyamV7> - License: RPL-1.5
 
 export default class Vector {
     #buffer;
@@ -21,11 +21,40 @@ export default class Vector {
         return !Number.isInteger(address) || address < 0 || address > HighAddress;
     }
 
-    constructor(T) {
+    constructor(T, I = {}) {
+        if (typeof I !== "object" || I === null) {
+            throw new TypeError("Expected an object for the `I` parameter");
+        }
+
+        if (
+            Object.hasOwn(I, "capacity") &&
+            Vector.#isOutOfBound(I.capacity, Infinity)
+        ) {
+            throw new RangeError("capacity must be a non-negative integer");
+        }
+
+        const { capacity = 8, length = 0 } = I;
+
         if (Object.getPrototypeOf(T) === Vector.#TypedArray) {
-            this.#buffer = new T(8);
+            if (
+                Object.hasOwn(I, "length") &&
+                Vector.#isOutOfBound(I.length, capacity)
+            ) {
+                throw new RangeError(
+                    "length must be a non-negative integer less than or equal to capacity"
+                );
+            }
+            this.#buffer = ((this.#length = length), new T(capacity));
         } else if (ArrayBuffer.isView(T) && !(T instanceof DataView)) {
-            this.#buffer = ((this.#length = T.length), T);
+            if (
+                Object.hasOwn(I, "length") &&
+                Vector.#isOutOfBound(I.length, T.length)
+            ) {
+                throw new RangeError(
+                    "length must be a non-negative integer less than or equal to capacity"
+                );
+            }
+            this.#buffer = ((this.#length = I.length ?? T.length), T);
         } else {
             throw new TypeError(
                 "Expected a TypedArray View or a TypedArray constructor"
