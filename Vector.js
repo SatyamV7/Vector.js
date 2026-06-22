@@ -1,4 +1,4 @@
-// Vector.js v0.0.5 <22nd June, 2026> - Author: Satyam Verma <github.com/SatyamV7> - License: RPL-1.5
+// Vector.js v0.0.6 <22nd June, 2026> - Author: Satyam Verma <github.com/SatyamV7> - License: RPL-1.5
 
 export default class Vector {
     #buffer;

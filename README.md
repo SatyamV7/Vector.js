@@ -1,6 +1,6 @@
 # Vector.js
 
-**Version:** 0.0.5 — 22nd June, 2026
+**Version:** 0.0.6 — 22nd June, 2026
 
 **Author:** Satyam Verma — [github.com/SatyamV7](https://github.com/SatyamV7)
 
@@ -92,8 +92,8 @@ Each callable property must conform to the interface below. Conformance is not v
 
 | Property | Signature | Required behaviour |
 |---|---|---|
-| `malloc` | `(T, size) → TypedArray` | Must return a TypedArray of constructor `T` whose `length` is exactly `size`. |
-| `realloc` | `(view, size) → TypedArray` | Must return a TypedArray of the same constructor as `view` whose `length` is exactly `size`. The contents of `view` over `[0, min(view.length, size))` must be preserved in the returned TypedArray. |
+| `malloc` | `(T, size) → TypedArray` | Must return a TypedArray of constructor `T` whose `length` is exactly `size` with all elements initialized to zero of the appropriate type. |
+| `realloc` | `(view, size) → TypedArray` | Must return a TypedArray of the same constructor as `view` whose `length` is exactly `size`. The contents of `view` over `[0, min(view.length, size))` must be preserved in the returned TypedArray, with any additional elements (if any initialized) must be initialized to zero of the appropriate type. |
 | `free` | `(view) → void` | Must release the buffer underlying `view`. The vector issues no further accesses to `view` or its buffer subsequent to this call. |
 
 ---
