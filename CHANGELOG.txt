@@ -13,3 +13,8 @@ v0.0.3 <https://github.com/SatyamV7/Vector.js/commit/41062b8ccaff448b5d350cc08f8
 v0.0.4 <https://github.com/SatyamV7/Vector.js/commit/1c4dee9dc291aef12ca311fff76c3e5307a5b9b8>:
 
 - Added new `I` parameter to the constructor, allowing users to configure the initial state of the vector.
+
+v0.0.5 <https://github.com/SatyamV7/Vector.js/commit/72bbe8e7759f9d58f0f6b33fb8e98eb5a3cc6e05>:
+
+- Added support for custom allocators via the `I.allocator` property in the constructor.
+- Added a new `destruct()` method to free the internal buffer & render the vector unusable post destruction.
