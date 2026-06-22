@@ -507,6 +507,7 @@ function checkedInsert(vec, address, pointee) {
 ```
 
 This pattern ensures that validation overhead is borne only by the callers that require it, and is absent from call sites where inputs have already been established as valid.
+
 ---
 
 ## License
