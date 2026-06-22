@@ -168,10 +168,13 @@ export default class Vector {
             return null;
         }
         if (pointee instanceof this.#buffer.constructor) {
-            const mov_tail = this.#length;
-            this.#resize(this.#length + pointee.length, false);
-            this.#buffer.copyWithin(address + pointee.length, address, mov_tail);
+            const memmov_head = address;
+            const memmov_tail = this.#length;
+            const memmov_target = address + pointee.length;
+            this.reserve(this.#length + pointee.length);
+            this.#buffer.copyWithin(memmov_target, memmov_head, memmov_tail);
             this.#buffer.set(pointee, address);
+            this.#length += pointee.length;
         } else {
             if (this.length >= this.capacity) {
                 this.#buffer = this.#allocator.realloc(
