@@ -7,15 +7,25 @@ export default class Vector {
 
     static #TypedArray = Object.getPrototypeOf(Uint8Array);
 
-    static #realloc(view, new_cap) {
-        function realloc_v(view, size) {
+    static #Allocator = Object.freeze({
+        malloc(T, size) {
+            return new T(new ArrayBuffer(size * T.BYTES_PER_ELEMENT));
+        },
+
+        realloc(view, size) {
             return new view.constructor(
-                view.buffer.transfer(size * view.BYTES_PER_ELEMENT)
+                view.buffer.transferToFixedLength(size * view.BYTES_PER_ELEMENT)
             );
+        },
+
+        free(view) {
+            if (!view.buffer.detached) {
+                return void view.buffer.transferToFixedLength(0x0000);
+            }
         }
-        const capacity = new_cap ?? (view.length << 1 || 8);
-        return realloc_v(view, capacity);
-    }
+    });
+
+    #allocator = Vector.#Allocator;
 
     static #isOutOfBound(address, HighAddress) {
         return !Number.isInteger(address) || address < 0 || address > HighAddress;
@@ -33,6 +43,21 @@ export default class Vector {
             throw new RangeError("capacity must be a non-negative integer");
         }
 
+        if (
+            Object.hasOwn(I, "allocator") &&
+            (!I.allocator ||
+                typeof I.allocator !== "object" ||
+                typeof I.allocator.malloc !== "function" ||
+                typeof I.allocator.realloc !== "function" ||
+                typeof I.allocator.free !== "function")
+        ) {
+            throw new TypeError(
+                "allocator must be an non-null object with malloc, realloc, and free methods implemented"
+            );
+        } else if (Object.hasOwn(I, "allocator")) {
+            this.#allocator = I.allocator;
+        }
+
         const { capacity = 8, length = 0 } = I;
 
         if (Object.getPrototypeOf(T) === Vector.#TypedArray) {
@@ -44,7 +69,8 @@ export default class Vector {
                     "length must be a non-negative integer less than or equal to capacity"
                 );
             }
-            this.#buffer = ((this.#length = length), new T(capacity));
+            this.#buffer =
+                ((this.#length = length), this.#allocator.malloc(T, capacity));
         } else if (ArrayBuffer.isView(T) && !(T instanceof DataView)) {
             if (
                 Object.hasOwn(I, "length") &&
@@ -86,9 +112,15 @@ export default class Vector {
         return this.#buffer.length;
     }
 
+    destruct() {
+        this.#length = 0x00;
+        this.#allocator.free(this.#buffer);
+        this.#buffer = null;
+    }
+
     reserve(capacity) {
         if (capacity > this.#buffer.length) {
-            this.#buffer = Vector.#realloc(
+            this.#buffer = this.#allocator.realloc(
                 this.#buffer,
                 Math.max(capacity, this.#buffer.length << 1)
             );
@@ -102,7 +134,7 @@ export default class Vector {
         if (x > this.#length) {
             const c = Math.min(x, this.#buffer.length);
             if (x > this.#buffer.length) {
-                this.#buffer = Vector.#realloc(
+                this.#buffer = this.#allocator.realloc(
                     this.#buffer,
                     Math.max(x, this.#buffer.length << 1)
                 );
@@ -123,7 +155,7 @@ export default class Vector {
     shrink_to_fit() {
         if (this.#buffer.length === 0 || this.#buffer.length === this.#length)
             return;
-        this.#buffer = Vector.#realloc(this.#buffer, this.#length);
+        this.#buffer = this.#allocator.realloc(this.#buffer, this.#length);
     }
 
     insert(address, pointee) {
@@ -139,8 +171,11 @@ export default class Vector {
             this.#buffer.copyWithin(address + pointee.length, address, mov_tail);
             this.#buffer.set(pointee, address);
         } else {
-            if (this.#length >= this.capacity) {
-                this.#buffer = Vector.#realloc(this.#buffer);
+            if (this.length >= this.capacity) {
+                this.#buffer = this.#allocator.realloc(
+                    this.#buffer,
+                    this.#buffer.length << 1 || 8
+                );
             }
             this.#buffer.copyWithin(address + 1, address, this.#length++);
             this.#buffer[address] = pointee;
@@ -164,8 +199,11 @@ export default class Vector {
     }
 
     push(v) {
-        if (this.#length >= this.#buffer.length) {
-            this.#buffer = Vector.#realloc(this.#buffer);
+        if (this.length >= this.capacity) {
+            this.#buffer = this.#allocator.realloc(
+                this.#buffer,
+                this.#buffer.length << 1 || 8
+            );
         }
         this.#buffer[this.#length++] = v;
     }

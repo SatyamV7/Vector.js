@@ -81,6 +81,23 @@ Specifies the initial length — the number of elements considered logically pre
 
 ---
 
+##### `I.allocator`
+
+Supplants the default allocator for all buffer allocation, reallocation, and deallocation operations over the lifetime of the vector. The value is captured at construction time and is not subsequently replaceable.
+
+- Must be a non-`null` object whose `malloc`, `realloc`, and `free` properties are callable. Any other value throws a `TypeError`.
+- When omitted, the default allocator — implemented in terms of `ArrayBuffer.prototype.transferToFixedLength` — applies.
+
+Each callable property must conform to the interface below. Conformance is not verified at runtime; a non-conforming implementation constitutes undefined behaviour.
+
+| Property | Signature | Required behaviour |
+|---|---|---|
+| `malloc` | `(T, size) → TypedArray` | Must return a TypedArray of constructor `T` whose `length` is exactly `size`. |
+| `realloc` | `(view, size) → TypedArray` | Must return a TypedArray of the same constructor as `view` whose `length` is exactly `size`. The contents of `view` over `[0, min(view.length, size))` must be preserved in the returned TypedArray. |
+| `free` | `(view) → void` | Must release the buffer underlying `view`. The vector issues no further accesses to `view` or its buffer subsequent to this call. |
+
+---
+
 ### Failure Conditions
 
 | Condition | Error type |
@@ -89,6 +106,7 @@ Specifies the initial length — the number of elements considered logically pre
 | `I` is supplied but is not a non-`null` object | `TypeError` |
 | `I.capacity` is supplied but is not a non-negative integer | `RangeError` |
 | `I.length` is supplied but is not a non-negative integer, or exceeds the applicable upper bound | `RangeError` |
+| `I.allocator` is supplied but is not a non-`null` object, or is missing any of callable `malloc`, `realloc`, or `free` | `TypeError` |
 
 The constructor is the only point in the API that throws.
 
@@ -374,6 +392,26 @@ v.shrink_to_fit();
 
 ---
 
+#### `destruct()`
+- Invokes the allocator's `free` method on the backing buffer, sets the internal buffer reference to `null`, and sets `length` to `0`.
+
+- Any TypedArray views or references previously obtained via `pointer` or `data()` are invalidated subsequent to this call and must not be accessed thereafter.
+
+- Any subsequent operation that dereferences the internal buffer may throw a `TypeError` due to host's null dereference semantics.
+
+- No failure conditions exist for `destruct`.
+
+- Returns `undefined`.
+
+***Example***:
+```js
+v.destruct();
+```
+
+**Complexity:** O(1).
+
+---
+
 #### `data()`
 - Returns a TypedArray view over the active region `[0, length)`. The view is live — mutations are reflected in the Vector.
 
@@ -436,6 +474,7 @@ With the exception of the constructor, Vector does not throw. Failed operations 
 | `constructor(T, I)` | `I` is not a non-`null` object | throws `TypeError` |
 | `constructor(T, I)` | `I.capacity` is not a non-negative integer | throws `RangeError` |
 | `constructor(T, I)` | `I.length` is not a non-negative integer or exceeds its upper bound | throws `RangeError` |
+| `constructor(T, I)` | `I.allocator` is not a non-`null` object, or is missing any of `malloc`, `realloc`, or `free` | throws `TypeError` |
 | `insert(address, ...)` | `address` out of `[0, length]` | `null` |
 | `delete(address, length)` | Either bound out of range, or `length < 1` | `null` |
 | `pop()` | Vector is empty | `null` |
