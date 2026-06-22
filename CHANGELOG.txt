@@ -18,3 +18,7 @@ v0.0.5 <https://github.com/SatyamV7/Vector.js/commit/72bbe8e7759f9d58f0f6b33fb8e
 
 - Added support for custom allocators via the `I.allocator` property in the constructor.
 - Added a new `destruct()` method to free the internal buffer & render the vector unusable post destruction.
+
+v0.0.6 <https://github.com/SatyamV7/Vector.js/commit/7a3938f8ab644351efd373e99c487260a8af815a>:
+
+- Tightened the `malloc` and `realloc` allocator interface to require that all elements in the returned TypedArray be initialized to zero of the appropriate type.
