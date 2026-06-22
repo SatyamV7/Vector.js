@@ -87,13 +87,15 @@ export default class Vector {
             );
         }
 
-        const buffer = !this.#buffer.length
-            ? new this.#buffer.constructor(
-                  new ArrayBuffer(this.#buffer.BYTES_PER_ELEMENT)
-              )
-            : this.#buffer;
+        {
+            const buffer = !this.#buffer.length
+                ? new this.#buffer.constructor(
+                      new ArrayBuffer(this.#buffer.BYTES_PER_ELEMENT)
+                  )
+                : this.#buffer;
 
-        this.#NULL = buffer[0] ^ buffer[0];
+            this.#NULL = buffer[0] ^ buffer[0];
+        }
     }
 
     get length() {
