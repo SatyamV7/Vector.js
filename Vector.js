@@ -1,4 +1,4 @@
-// Vector.js v0.0.6 <22nd June, 2026> - Author: Satyam Verma <github.com/SatyamV7> - License: RPL-1.5
+// Vector.js v0.0.7 <23rd June, 2026> - Author: Satyam Verma <github.com/SatyamV7> - License: RPL-1.5
 
 export default class Vector {
     #buffer;
@@ -243,5 +243,9 @@ export default class Vector {
 
     [Symbol.iterator]() {
         return this.data()[Symbol.iterator]();
+    }
+
+    [Symbol.dispose]() {
+        return void this.destruct();
     }
 }

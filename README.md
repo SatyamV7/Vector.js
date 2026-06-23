@@ -1,6 +1,6 @@
 # Vector.js
 
-**Version:** 0.0.6 — 22nd June, 2026
+**Version:** 0.0.7 — 23rd June, 2026
 
 **Author:** Satyam Verma — [github.com/SatyamV7](https://github.com/SatyamV7)
 
@@ -17,9 +17,9 @@
 ## Requirements
 
 - A JavaScript environment supporting:
-  - [Private class fields](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_class_fields) (`#field`)
-  - [`ArrayBuffer.prototype.transfer()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer/transfer) (ES2024)
-  - TypedArrays (`Uint8Array`, `Float32Array`, etc.)
+    - [Private class fields](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_class_fields) (`#field`)
+    - [`ArrayBuffer.prototype.transfer()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer/transfer) (ES2024)
+    - TypedArrays (`Uint8Array`, `Float32Array`, etc.)
 
 ---
 
@@ -28,7 +28,7 @@
 `Vector.js` is a single self-contained file with no external dependencies. Copy it into your project and import as needed.
 
 ```js
-import Vector from './Vector.js';
+import Vector from "./Vector.js";
 ```
 
 ---
@@ -36,8 +36,8 @@ import Vector from './Vector.js';
 ## Construction
 
 ```js
-new Vector(T)
-new Vector(T, I)
+new Vector(T);
+new Vector(T, I);
 ```
 
 ### Parameters
@@ -51,7 +51,7 @@ new Vector(T, I)
 
 Any other value throws a `TypeError`.
 
-#### `I` *(optional)*
+#### `I` _(optional)_
 
 `I` is expected to be an object that configures the initial state of the vector. When supplied, it must be a non-`null` object; passing any other type (including `null`) throws a `TypeError`.
 
@@ -90,23 +90,23 @@ Supplants the default allocator for all buffer allocation, reallocation, and dea
 
 Each callable property must conform to the interface below. Conformance is not verified at runtime; a non-conforming implementation constitutes undefined behaviour.
 
-| Property | Signature | Required behaviour |
-|---|---|---|
-| `malloc` | `(T, size) → TypedArray` | Must return a TypedArray of constructor `T` whose `length` is exactly `size` with all elements initialized to zero of the appropriate type. |
+| Property  | Signature                   | Required behaviour                                                                                                                                                                                                                                                                                          |
+| --------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `malloc`  | `(T, size) → TypedArray`    | Must return a TypedArray of constructor `T` whose `length` is exactly `size` with all elements initialized to zero of the appropriate type.                                                                                                                                                                 |
 | `realloc` | `(view, size) → TypedArray` | Must return a TypedArray of the same constructor as `view` whose `length` is exactly `size`. The contents of `view` over `[0, min(view.length, size))` must be preserved in the returned TypedArray, with any additional elements (if any initialized) must be initialized to zero of the appropriate type. |
-| `free` | `(view) → void` | Must release the buffer underlying `view`. The vector issues no further accesses to `view` or its buffer subsequent to this call. |
+| `free`    | `(view) → void`             | Must release the buffer underlying `view`. The vector issues no further accesses to `view` or its buffer subsequent to this call.                                                                                                                                                                           |
 
 ---
 
 ### Failure Conditions
 
-| Condition | Error type |
-|---|---|
-| `T` is not a TypedArray constructor or TypedArray instance | `TypeError` |
-| `I` is supplied but is not a non-`null` object | `TypeError` |
-| `I.capacity` is supplied but is not a non-negative integer | `RangeError` |
-| `I.length` is supplied but is not a non-negative integer, or exceeds the applicable upper bound | `RangeError` |
-| `I.allocator` is supplied but is not a non-`null` object, or is missing any of callable `malloc`, `realloc`, or `free` | `TypeError` |
+| Condition                                                                                                              | Error type   |
+| ---------------------------------------------------------------------------------------------------------------------- | ------------ |
+| `T` is not a TypedArray constructor or TypedArray instance                                                             | `TypeError`  |
+| `I` is supplied but is not a non-`null` object                                                                         | `TypeError`  |
+| `I.capacity` is supplied but is not a non-negative integer                                                             | `RangeError` |
+| `I.length` is supplied but is not a non-negative integer, or exceeds the applicable upper bound                        | `RangeError` |
+| `I.allocator` is supplied but is not a non-`null` object, or is missing any of callable `malloc`, `realloc`, or `free` | `TypeError`  |
 
 The constructor is the only point in the API that throws.
 
@@ -143,7 +143,7 @@ const v5 = new Vector(new Uint8Array([1, 2, 3, 4]), { length: 2 });
 
 ### Properties
 
-#### `length` *(getter)*
+#### `length` _(getter)_
 
 ```js
 v.length;
@@ -153,7 +153,7 @@ v.length;
 
 - `length` is always less than or equal to `capacity`.
 
-#### `length` *(setter)*
+#### `length` _(setter)_
 
 ```js
 v.length = n;
@@ -196,6 +196,7 @@ v.pointer;
 ### Methods
 
 #### `push(v)`
+
 - Appends a single value to the end of the vector, reallocating if necessary.
 
 - Reallocation takes place if `length` is equal to `capacity`. The new capacity is determined by the growth strategy described in [Capacity Growth](#capacity-growth).
@@ -206,7 +207,8 @@ v.pointer;
 
 - `v` may be a number or BigInt, as per the TypedArray's element kind. The value is subject to the TypedArray's own numeric coercion semantics.
 
-***Example***:
+**_Example_**:
+
 ```js
 v.push(42);
 ```
@@ -216,11 +218,13 @@ v.push(42);
 ---
 
 #### `pop()`
+
 - Removes the last element of the vector and returns its value, if the vector is not empty i.e, `length` is greater than zero.
 
 - Fails if the vector is empty, i.e. `length` is equal to zero, returning `null` in failure condition.
 
-***Example***:
+**_Example_**:
+
 ```js
 const last = v.pop();
 ```
@@ -230,6 +234,7 @@ const last = v.pop();
 ---
 
 #### `at(address, pointee?)`
+
 - Reads or writes the element at `address`.
 
 - With `pointee` argument absent, returns the value at `address` index.
@@ -239,10 +244,11 @@ const last = v.pop();
 
 > **Warning:** `at` performs no bounds checking. It is the caller's responsibility to ensure `address` is a valid index within `[0, length)`. Access outside this range is not trapped — reads may return indeterminate values and writes produce undefined behaviour with respect to the vector's logical state. This is by design; callers who have already established index validity should not pay for redundant validation. If bounds checking is required, it must be applied at the call site (see [Call-Site Safety](#call-site-safety)).
 
-***Example***:
+**_Example_**:
+
 ```js
-v.at(0);          // read
-v.at(0, 3.14);    // write, returns 3.14
+v.at(0); // read
+v.at(0, 3.14); // write, returns 3.14
 ```
 
 **Complexity:** O(1).
@@ -251,23 +257,24 @@ v.at(0, 3.14);    // write, returns 3.14
 
 A value returned by a read operation for which this specification imposes no constraint on content.
 
-- The returned value *shall* be a valid, well-defined value of the vector's element type or `undefined`, as produced deterministically by the underlying TypedArray read. It is never unspecified at the engine level, uninitialised, or unsafe to obtain.
-- This specification does not constrain *which* such value is returned. The value *may* depend on implementation details not described herein, and such details *shall not* be relied upon, including where observed to be stable across calls or releases.
-- A future revision *may* alter the indeterminate value produced by a given operation without this being considered a breaking change.
+- The returned value _shall_ be a valid, well-defined value of the vector's element type or `undefined`, as produced deterministically by the underlying TypedArray read. It is never unspecified at the engine level, uninitialised, or unsafe to obtain.
+- This specification does not constrain _which_ such value is returned. The value _may_ depend on implementation details not described herein, and such details _shall not_ be relied upon, including where observed to be stable across calls or releases.
+- A future revision _may_ alter the indeterminate value produced by a given operation without this being considered a breaking change.
 
 #### Undefined behaviour
 
 The absence of any constraint, imposed by this specification, on the effect of a write operation upon Vector's tracked invariants (`length`, `capacity`, the active/reserved boundary), when that operation is performed outside the bounds of its documented contract.
 
-- The underlying write *shall* remain memory-safe and fully defined at the engine level for every address, in accordance with the ECMAScript specification, irrespective of this clause.
+- The underlying write _shall_ remain memory-safe and fully defined at the engine level for every address, in accordance with the ECMAScript specification, irrespective of this clause.
 - This clause constrains only the logical state guarantees made by Vector. It does not relax, nor refer to, memory safety at the level of the host engine.
-- No conforming implementation, nor any caller, *shall* infer reachability or unreachability of any code path on the basis of this clause.
+- No conforming implementation, nor any caller, _shall_ infer reachability or unreachability of any code path on the basis of this clause.
 
-> **Note:** These terms bound the guarantees made by *this* specification; they do not describe properties of the underlying runtime, which remains fully deterministic and memory-safe in all cases. Where this document is silent, behaviour is unspecified by Vector — not unsafe, and not unknown to the engine.
+> **Note:** These terms bound the guarantees made by _this_ specification; they do not describe properties of the underlying runtime, which remains fully deterministic and memory-safe in all cases. Where this document is silent, behaviour is unspecified by Vector — not unsafe, and not unknown to the engine.
 
 ---
 
 #### `insert(address, pointee)`
+
 - Inserts one or more elements at `address`, shifting all subsequent elements rightward.
 
 - If `pointee` is a number/BigInt (as per the TypedArray's element kind), pointee's value is inserted, and the value inserted is subject to the TypedArray's own numeric coercion semantics.
@@ -283,7 +290,8 @@ The absence of any constraint, imposed by this specification, on the effect of a
 
 > Passing a TypedArray of a **different** element kind than the vector's buffer falls through to the scalar insertion path. Only the value assigned to `address` is inserted, subject to the TypedArray's own numeric coercion semantics.
 
-***Example***:
+**_Example_**:
+
 ```js
 v.insert(2, 99);
 v.insert(0, new Float32Array([1.0, 2.0, 3.0]));
@@ -294,6 +302,7 @@ v.insert(0, new Float32Array([1.0, 2.0, 3.0]));
 ---
 
 #### `delete(address, length?)`
+
 - Removes `length` consecutive elements beginning at `address`, shifting subsequent elements leftward.
 
 - Value of `length` parameter defaults to `1` and is expected to be a integer greater than or equal to 1.
@@ -302,10 +311,11 @@ v.insert(0, new Float32Array([1.0, 2.0, 3.0]));
 
 - Returns `undefined` on success.
 
-***Example***:
+**_Example_**:
+
 ```js
-v.delete(2);     // remove one element at index 2
-v.delete(2, 3);  // remove elements at indices 2, 3, and 4
+v.delete(2); // remove one element at index 2
+v.delete(2, 3); // remove elements at indices 2, 3, and 4
 ```
 
 **Complexity:** O(n).
@@ -313,6 +323,7 @@ v.delete(2, 3);  // remove elements at indices 2, 3, and 4
 ---
 
 #### `append(T)`
+
 - Appends all elements of a TypedArray `T` to the end of the vector, reallocating if necessary.
 
 - T is expected to have the same element kind as the vector's buffer. If `T` has a different element kind, the values are casted to the vector's element type according to the TypedArray's own numeric coercion semantics.
@@ -321,7 +332,8 @@ v.delete(2, 3);  // remove elements at indices 2, 3, and 4
 
 - Returns `undefined`.
 
-***Example***:
+**_Example_**:
+
 ```js
 v.append(new Uint8Array([10, 20, 30]));
 ```
@@ -331,6 +343,7 @@ v.append(new Uint8Array([10, 20, 30]));
 ---
 
 #### `resize(n)`
+
 - Resizes the vector to contain exactly the `n` number of elements.
 
 - If current `length` is greater than `n`, the vector is reduced to first `n` elements.
@@ -345,7 +358,8 @@ v.append(new Uint8Array([10, 20, 30]));
 
 - There is no failure condition for `resize`, instead it is a no-op if `n` is invalid or equal to current `length`.
 
-***Example***:
+**_Example_**:
+
 ```js
 v.resize(20);
 ```
@@ -355,6 +369,7 @@ v.resize(20);
 ---
 
 #### `reserve(n)`
+
 - Increase the capacity of the vector (the total number of elements that the vector can hold without requiring reallocation) to a value that's greater or equal to `n`.
 
 - If `n` is greater than the current `capacity`, new storage is allocated, otherwise the function does nothing.
@@ -367,7 +382,8 @@ v.resize(20);
 
 - Returns `undefined`.
 
-***Example***:
+**_Example_**:
+
 ```js
 v.reserve(10_000);
 ```
@@ -377,13 +393,15 @@ v.reserve(10_000);
 ---
 
 #### `shrink_to_fit()`
+
 - Reallocates the backing buffer to exactly `length` elements, releasing surplus capacity. A no-op if `capacity` already equals `length`.
 
 - No failure conditions exist for `shrink_to_fit` but is a no-op if `length` is equal to `capacity`.
 
 - Returns `undefined`.
 
-***Example***:
+**_Example_**:
+
 ```js
 v.shrink_to_fit();
 ```
@@ -393,6 +411,7 @@ v.shrink_to_fit();
 ---
 
 #### `destruct()`
+
 - Invokes the allocator's `free` method on the backing buffer, sets the internal buffer reference to `null`, and sets `length` to `0`.
 
 - Any TypedArray views or references previously obtained via `pointer` or `data()` are invalidated subsequent to this call and must not be accessed thereafter.
@@ -403,7 +422,8 @@ v.shrink_to_fit();
 
 - Returns `undefined`.
 
-***Example***:
+**_Example_**:
+
 ```js
 v.destruct();
 ```
@@ -412,7 +432,31 @@ v.destruct();
 
 ---
 
+#### `[Symbol.dispose]()`
+
+- Invokes the `destruct()` method to release the vector's resources.
+
+- No failure conditions exist for `[Symbol.dispose]`.
+
+- Returns `undefined`.
+
+**_Example_**:
+
+```js
+{
+    using v = new Vector(Float32Array, { capacity: 1024 });
+    // do something with v...
+
+    // v is unreachable at the end of this block, and its resources are released automatically
+}
+```
+
+**Complexity:** O(1).
+
+---
+
 #### `data()`
+
 - Returns a TypedArray view over the active region `[0, length)`. The view is live — mutations are reflected in the Vector.
 
 - The view is invalidated by any operation that reallocates the backing buffer (e.g., `push`, `insert`, `resize`, etc.). Callers must not retain references to the view across such operations.
@@ -423,7 +467,8 @@ v.destruct();
 
 - Returns a TypedArray of the same element kind as the vector's buffer, with `length` equal to the vector's `length` at the time of creation.
 
-***Example***:
+**_Example_**:
+
 ```js
 const view = v.data();
 ```
@@ -433,6 +478,7 @@ const view = v.data();
 ---
 
 #### `[Symbol.iterator]()`
+
 - Iterates over the active region. Compatible with `for...of`, spread syntax, and destructuring.
 
 - Iterators are invalidated by any operation that reallocates the backing buffer (e.g., `push`, `insert`, `resize`, etc.). Callers must not retain references to the iterator across such operations.
@@ -441,7 +487,8 @@ const view = v.data();
 
 - Read-only operations do not invalidate iterators or make iterators go stale.
 
-***Example***:
+**_Example_**:
+
 ```js
 for (const x of v) console.log(x);
 const arr = [...v];
@@ -453,12 +500,12 @@ const arr = [...v];
 
 Vector grows using a **capacity-doubling** strategy, starting from an initial capacity of 8. This ensures amortized O(1) cost per element across any sequence of appends.
 
-| Operation | Resulting capacity |
-|---|---|
-| `push` / scalar `insert` when full | `current × 2 || 8` |
-| `reserve(n)` | `max(n, current × 2)` |
+| Operation                               | Resulting capacity    |
+| --------------------------------------- | --------------------- | --- | --- |
+| `push` / scalar `insert` when full      | `current × 2          |     | 8`  |
+| `reserve(n)`                            | `max(n, current × 2)` |
 | `resize(n)` / `length = n` when growing | `max(n, current × 2)` |
-| `shrink_to_fit()` | exactly `length` |
+| `shrink_to_fit()`                       | exactly `length`      |
 
 When the upper bound of a workload is known in advance, calling `reserve` prior to insertion eliminates all reallocation during that workload.
 
@@ -468,19 +515,19 @@ When the upper bound of a workload is known in advance, calling `reserve` prior 
 
 With the exception of the constructor, Vector does not throw. Failed operations return `null` as an error sentinel:
 
-| Operation | Failure condition | Return value |
-|---|---|---|
-| `constructor(T, I)` | Invalid `T` | throws `TypeError` |
-| `constructor(T, I)` | `I` is not a non-`null` object | throws `TypeError` |
-| `constructor(T, I)` | `I.capacity` is not a non-negative integer | throws `RangeError` |
-| `constructor(T, I)` | `I.length` is not a non-negative integer or exceeds its upper bound | throws `RangeError` |
-| `constructor(T, I)` | `I.allocator` is not a non-`null` object, or is missing any of `malloc`, `realloc`, or `free` | throws `TypeError` |
-| `insert(address, ...)` | `address` out of `[0, length]` | `null` |
-| `delete(address, length)` | Either bound out of range, or `length < 1` | `null` |
-| `pop()` | Vector is empty | `null` |
-| `at(address, ...)` | *(no check performed)* | indeterminate if out of bounds |
+| Operation                 | Failure condition                                                                             | Return value                   |
+| ------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------ |
+| `constructor(T, I)`       | Invalid `T`                                                                                   | throws `TypeError`             |
+| `constructor(T, I)`       | `I` is not a non-`null` object                                                                | throws `TypeError`             |
+| `constructor(T, I)`       | `I.capacity` is not a non-negative integer                                                    | throws `RangeError`            |
+| `constructor(T, I)`       | `I.length` is not a non-negative integer or exceeds its upper bound                           | throws `RangeError`            |
+| `constructor(T, I)`       | `I.allocator` is not a non-`null` object, or is missing any of `malloc`, `realloc`, or `free` | throws `TypeError`             |
+| `insert(address, ...)`    | `address` out of `[0, length]`                                                                | `null`                         |
+| `delete(address, length)` | Either bound out of range, or `length < 1`                                                    | `null`                         |
+| `pop()`                   | Vector is empty                                                                               | `null`                         |
+| `at(address, ...)`        | _(no check performed)_                                                                        | indeterminate if out of bounds |
 
-> **Note:** With the exception of the constructor, Vector does not throw, but the underlying TypedArray may throw, likely due to coercion issues when using Vector's backed by BigInt64Array or BigUint64Array. Such exceptions are not explicitly documented as part of the Vector API, but may occur if input values are incompatible with the vector's element type. Also if detached ArrayBuffer backed views are passed to `constructor`, `insert`, or `append`, the methods may throw.
+> **Note:** With the exception of the constructor, Vector does not throw, but the underlying TypedArray may throw, likely due to coercion issues when using Vector's backed by BigInt64Array or BigUint64Array. Such exceptions are not explicitly documented as part of the Vector API, but may occur if input values are incompatible with the vector's element type. Also if detached ArrayBuffer backed views are passed to `constructor`, `insert`, or `append`, the methods may throw. Also custom allocators may throw if they are implemented to do so.
 
 ---
 
@@ -501,8 +548,7 @@ Similarly, callers who require exception-throwing behaviour from `insert` or `de
 ```js
 function checkedInsert(vec, address, pointee) {
     const result = vec.insert(address, pointee);
-    if (result === null)
-        throw new RangeError(`insert at index ${address} failed`);
+    if (result === null) throw new RangeError(`insert at index ${address} failed`);
 }
 ```
 
@@ -513,3 +559,5 @@ This pattern ensures that validation overhead is borne only by the callers that 
 ## License
 
 The Vector.js library is licensed under the terms of the Reciprocal Public License 1.5 (RPL1.5). See LICENSE.txt for more information.
+
+---
