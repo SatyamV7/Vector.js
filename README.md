@@ -448,9 +448,8 @@ v.destruct();
 {
     using v = new Vector(Float32Array, { capacity: 1024 });
     // do something with v...
-
-    // v is unreachable at the end of this block, and its resources are released automatically
 }
+// v is unreachable at the outside block, and its resources are released automatically
 ```
 
 **Complexity:** O(1).
