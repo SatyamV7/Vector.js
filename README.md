@@ -19,7 +19,9 @@
 - A JavaScript environment supporting:
     - [Private class fields](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_class_fields) (`#field`)
     - [`ArrayBuffer.prototype.transfer()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer/transfer) (ES2024)
-    - TypedArrays (`Uint8Array`, `Float32Array`, etc.)
+    - [`Symbol.dispose`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/dispose) (ES2025)
+    - [`using` statement](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/using) (ES2025)
+    - TypedArrays (`Uint8Array`, `Float32Array`, `BigInt64Array`, etc.)
 
 ---
 
