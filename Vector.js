@@ -5,7 +5,7 @@ export default class Vector {
     #length = 0;
     #NULL = 0;
 
-    static #OverwriteKey = Symbol();
+    static #PrivilegedKey = Symbol();
 
     static #TypedArray = Object.getPrototypeOf(Uint8Array);
 
@@ -143,7 +143,7 @@ export default class Vector {
                     Math.max(n, this.#buffer.length << 1)
                 );
             }
-            if (ZeroInit !== Vector.#OverwriteKey) {
+            if (ZeroInit !== Vector.#PrivilegedKey) {
                 this.#buffer.fill($0, this.#length, c);
             }
         } /* else {
@@ -231,7 +231,7 @@ export default class Vector {
 
     append(T) {
         const address = this.#length;
-        this.resize(address + T.length, Vector.#OverwriteKey);
+        this.resize(address + T.length, Vector.#PrivilegedKey);
         this.#buffer.set(T, address);
     }
 
