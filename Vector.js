@@ -5,6 +5,8 @@ export default class Vector {
     #length = 0;
     #NULL = 0;
 
+    static #OverwriteKey = Symbol();
+
     static #TypedArray = Object.getPrototypeOf(Uint8Array);
 
     static #Allocator = Object.freeze({
@@ -103,7 +105,7 @@ export default class Vector {
     }
 
     set length(x) {
-        this.#resize(x, true);
+        this.resize(x, undefined);
     }
 
     get pointer() {
@@ -129,29 +131,25 @@ export default class Vector {
         }
     }
 
-    #resize(x, ZeroInit = true) {
-        if (!Number.isInteger(x)) return;
-        if (x < 0 || x === this.#length) return;
+    resize(n, ZeroInit) {
+        if (!Number.isInteger(n)) return;
+        if (n < 0 || n === this.#length) return;
         const $0 = this.#NULL;
-        if (x > this.#length) {
-            const c = Math.min(x, this.#buffer.length);
-            if (x > this.#buffer.length) {
+        if (n > this.#length) {
+            const c = Math.min(n, this.#buffer.length);
+            if (n > this.#buffer.length) {
                 this.#buffer = this.#allocator.realloc(
                     this.#buffer,
-                    Math.max(x, this.#buffer.length << 1)
+                    Math.max(n, this.#buffer.length << 1)
                 );
             }
-            if (ZeroInit) {
+            if (ZeroInit !== Vector.#OverwriteKey) {
                 this.#buffer.fill($0, this.#length, c);
             }
         } /* else {
             this.#buffer.fill($0, this.#length, x);
         } */
-        this.#length = x;
-    }
-
-    resize(n) {
-        this.#resize(n, true);
+        this.#length = n;
     }
 
     shrink_to_fit() {
@@ -233,7 +231,7 @@ export default class Vector {
 
     append(T) {
         const address = this.#length;
-        this.#resize(address + T.length, false);
+        this.resize(address + T.length, Vector.#OverwriteKey);
         this.#buffer.set(T, address);
     }
 
