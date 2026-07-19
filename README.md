@@ -1,6 +1,6 @@
 # Vector.js
 
-**Version:** 0.0.7 — 23rd June, 2026
+**Version:** 0.0.8 — 19th July, 2026
 
 **Author:** Satyam Verma — [github.com/SatyamV7](https://github.com/SatyamV7)
 
@@ -18,7 +18,7 @@
 
 - A JavaScript environment supporting:
     - [Private class fields](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_class_fields) (`#field`)
-    - [`ArrayBuffer.prototype.transfer()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer/transfer) (ES2024)
+    - [`ArrayBuffer.prototype.transferToFixedLength()`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer/transferToFixedLength) (ES2024)
     - [`Symbol.dispose`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/dispose) (ES2025)
     - [`using` statement](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/using) (ES2025)
     - TypedArrays (`Uint8Array`, `Float32Array`, `BigInt64Array`, etc.)
@@ -94,8 +94,8 @@ Each callable property must conform to the interface below. Conformance is not v
 
 | Property  | Signature                   | Required behaviour                                                                                                                                                                                                                                                                                          |
 | --------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `malloc`  | `(T, size) → TypedArray`    | Must return a TypedArray of constructor `T` whose `length` is exactly `size` with all elements initialized to zero of the appropriate type.                                                                                                                                                                 |
-| `realloc` | `(view, size) → TypedArray` | Must return a TypedArray of the same constructor as `view` whose `length` is exactly `size`. The contents of `view` over `[0, min(view.length, size))` must be preserved in the returned TypedArray, with any additional elements (if any initialized) must be initialized to zero of the appropriate type. |
+| `malloc`  | `(T, size) → TypedArray`    | Must return a TypedArray instance of constructor `T` whose `length` is exactly `size` with all elements initialized to zero of the appropriate type.                                                                                                                                                                 |
+| `realloc` | `(view, size) → TypedArray` | Must return a TypedArray instance of the same constructor as `view` whose `length` is exactly `size`. The contents of `view` over `[0, min(view.length, size))` must be preserved in the returned TypedArray view, with any additional elements (if any initialized) must be initialized to zero of the appropriate type. |
 | `free`    | `(view) → void`             | Must release the buffer underlying `view`. The vector issues no further accesses to `view` or its buffer subsequent to this call.                                                                                                                                                                           |
 
 ---
@@ -237,14 +237,14 @@ const last = v.pop();
 
 #### `at(address, pointee?)`
 
-- Reads or writes the element at `address`.
+- Reads or writes the element at `address` index.
 
-- With `pointee` argument absent, returns the value at `address` index.
-- With `pointee` argument present, writes `pointee` to `address` and returns the input value as-is.
+- With `pointee` argument equal to `undefined`, returns the value at `address` index.
+- With `pointee` argument not equal to `undefined`, writes `pointee` to `address` index and returns the input value as-is.
 
 - Note that `pointee` (if provided) may be coerced to the vector's element type when writing at given `address`, also returned value (same as `pointee`, the input value) may not be equal to value written to the vector, due to TypedArray numeric coercion semantics.
 
-> **Warning:** `at` performs no bounds checking. It is the caller's responsibility to ensure `address` is a valid index within `[0, length)`. Access outside this range is not trapped — reads may return indeterminate values and writes produce undefined behaviour with respect to the vector's logical state. This is by design; callers who have already established index validity should not pay for redundant validation. If bounds checking is required, it must be applied at the call site (see [Call-Site Safety](#call-site-safety)).
+> **Warning:** `at` performs no bounds checking. It is the caller's responsibility to ensure `address` is a valid index within `[0, length)`. Access outside this range is not trapped — reads may return indeterminate values and writes produce undefined behaviour with respect to the vector's logical state, though all reads and writes to underlying TypedArray view are well-defined according to the ECMAScript specification. This is by design; callers who have already established index validity should not pay for redundant validation. If bounds checking is required, it must be applied at the call site (see [Call-Site Safety](#call-site-safety)).
 
 **_Example_**:
 
@@ -307,7 +307,7 @@ v.insert(0, new Float32Array([1.0, 2.0, 3.0]));
 
 - Removes `length` consecutive elements beginning at `address`, shifting subsequent elements leftward.
 
-- Value of `length` parameter defaults to `1` and is expected to be a integer greater than or equal to 1.
+- The `length` parameter defaults to `1` and is expected to be a integer greater than or equal to 1.
 
 - Fails if `address` or `address + length - 1` falls outside active region, or if `length` is less than 1, returning `null` in failure condition.
 
@@ -328,7 +328,7 @@ v.delete(2, 3); // remove elements at indices 2, 3, and 4
 
 - Appends all elements of a TypedArray `T` to the end of the vector, reallocating if necessary.
 
-- T is expected to have the same element kind as the vector's buffer. If `T` has a different element kind, the values are casted to the vector's element type according to the TypedArray's own numeric coercion semantics.
+- T is expected to have the same element kind as the vector's buffer. If `T` has a different element kind, the values are cast to the vector's element type according to the TypedArray's own numeric coercion semantics.
 
 - No failure conditions exist for `append`.
 
@@ -372,7 +372,7 @@ v.resize(20);
 
 #### `reserve(n)`
 
-- Increase the capacity of the vector (the total number of elements that the vector can hold without requiring reallocation) to a value that's greater or equal to `n`.
+- Increase the capacity of the vector (the total number of elements that the vector can hold without requiring reallocation) to a value that's greater than or equal to to `n`.
 
 - If `n` is greater than the current `capacity`, new storage is allocated, otherwise the function does nothing.
 
@@ -499,14 +499,14 @@ const arr = [...v];
 
 ## Capacity Growth
 
-Vector grows using a **capacity-doubling** strategy, starting from an initial capacity of 8. This ensures amortized O(1) cost per element across any sequence of appends.
+Vector grows using a **capacity-doubling** strategy. Growth begins from the capacity established during construction or by the most recent `reserve()`, `resize()`, or `shrink_to_fit()` operation.
 
-| Operation                               | Resulting capacity    |
-| --------------------------------------- | --------------------- | --- | --- |
-| `push` / scalar `insert` when full      | `current × 2          |     | 8`  |
-| `reserve(n)`                            | `max(n, current × 2)` |
-| `resize(n)` / `length = n` when growing | `max(n, current × 2)` |
-| `shrink_to_fit()`                       | exactly `length`      |
+| Operation                               | Resulting capacity      |
+| --------------------------------------- | ----------------------- |
+| `push` / scalar `insert` when full      | `max(8, current × 2)`   |
+| `reserve(n)`                            | `max(n, current × 2)`   |
+| `resize(n)` / `length = n` when growing | `max(n, current × 2)`   |
+| `shrink_to_fit()`                       | exactly `length`        |
 
 When the upper bound of a workload is known in advance, calling `reserve` prior to insertion eliminates all reallocation during that workload.
 
@@ -528,7 +528,7 @@ With the exception of the constructor, Vector does not throw. Failed operations 
 | `pop()`                   | Vector is empty                                                                               | `null`                         |
 | `at(address, ...)`        | _(no check performed)_                                                                        | indeterminate if out of bounds |
 
-> **Note:** With the exception of the constructor, Vector does not throw, but the underlying TypedArray may throw, likely due to coercion issues when using Vector's backed by BigInt64Array or BigUint64Array. Such exceptions are not explicitly documented as part of the Vector API, but may occur if input values are incompatible with the vector's element type. Also if detached ArrayBuffer backed views are passed to `constructor`, `insert`, or `append`, the methods may throw. Also custom allocators may throw if they are implemented to do so.
+> **Note:** With the exception of the constructor, Vector does not throw, but the underlying TypedArray may throw, likely due to coercion issues when using Vectors backed by BigInt64Array or BigUint64Array. Such exceptions are not explicitly documented as part of the Vector API, but may occur if input values are incompatible with the vector's element type. Also if detached ArrayBuffer backed views are passed to `constructor`, `insert`, or `append`, the methods may throw. Also exceptions thrown by user-supplied allocators are propogated unchanged if they are implemented to do so.
 
 ---
 
