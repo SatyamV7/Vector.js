@@ -26,3 +26,7 @@ v0.0.6 <https://github.com/SatyamV7/Vector.js/commit/7a3938f8ab644351efd373e99c4
 v0.0.7 <https://github.com/SatyamV7/Vector.js/commit/77c4396134469147584d18e43c2a359c0c2733b6>:
 
 - Added `[Symbol.dispose]()` method to invoke `destruct()` for releasing vector resources if the instance goes out of scope (unreachable).
+
+v0.0.8 <https://github.com/SatyamV7/Vector.js/commit/cbd7717f41684f93443e247becc79448790549ee>:
+
+- Modified `at()` method to define behaviour regarding read/write mode invocation & `pointee` argument handling.
