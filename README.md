@@ -92,11 +92,11 @@ Supplants the default allocator for all buffer allocation, reallocation, and dea
 
 Each callable property must conform to the interface below. Conformance is not verified at runtime; a non-conforming implementation constitutes undefined behaviour.
 
-| Property  | Signature                   | Required behaviour                                                                                                                                                                                                                                                                                          |
-| --------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `malloc`  | `(T, size) → TypedArray`    | Must return a TypedArray instance of constructor `T` whose `length` is exactly `size` with all elements initialized to zero of the appropriate type.                                                                                                                                                                 |
+| Property  | Signature                   | Required behaviour                                                                                                                                                                                                                                                                                                        |
+| --------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `malloc`  | `(T, size) → TypedArray`    | Must return a TypedArray instance of constructor `T` whose `length` is exactly `size` with all elements initialized to zero of the appropriate type.                                                                                                                                                                      |
 | `realloc` | `(view, size) → TypedArray` | Must return a TypedArray instance of the same constructor as `view` whose `length` is exactly `size`. The contents of `view` over `[0, min(view.length, size))` must be preserved in the returned TypedArray view, with any additional elements (if any initialized) must be initialized to zero of the appropriate type. |
-| `free`    | `(view) → void`             | Must release the buffer underlying `view`. The vector issues no further accesses to `view` or its buffer subsequent to this call.                                                                                                                                                                           |
+| `free`    | `(view) → void`             | Must release the buffer underlying `view`. The vector issues no further accesses to `view` or its buffer subsequent to this call.                                                                                                                                                                                         |
 
 ---
 
@@ -501,12 +501,12 @@ const arr = [...v];
 
 Vector grows using a **capacity-doubling** strategy. Growth begins from the capacity established during construction or by the most recent `reserve()`, `resize()`, or `shrink_to_fit()` operation.
 
-| Operation                               | Resulting capacity      |
-| --------------------------------------- | ----------------------- |
-| `push` / scalar `insert` when full      | `max(8, current × 2)`   |
-| `reserve(n)`                            | `max(n, current × 2)`   |
-| `resize(n)` / `length = n` when growing | `max(n, current × 2)`   |
-| `shrink_to_fit()`                       | exactly `length`        |
+| Operation                               | Resulting capacity    |
+| --------------------------------------- | --------------------- |
+| `push` / scalar `insert` when full      | `max(8, current × 2)` |
+| `reserve(n)`                            | `max(n, current × 2)` |
+| `resize(n)` / `length = n` when growing | `max(n, current × 2)` |
+| `shrink_to_fit()`                       | exactly `length`      |
 
 When the upper bound of a workload is known in advance, calling `reserve` prior to insertion eliminates all reallocation during that workload.
 

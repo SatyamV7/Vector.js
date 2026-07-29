@@ -174,12 +174,7 @@ export default class Vector {
             this.#buffer.set(pointee, address);
             this.#length += pointee.length;
         } else {
-            if (this.length >= this.capacity) {
-                this.#buffer = this.#allocator.realloc(
-                    this.#buffer,
-                    this.#buffer.length << 1 || 8
-                );
-            }
+            this.reserve(this.length + 0x1);
             this.#buffer.copyWithin(address + 1, address, this.#length++);
             this.#buffer[address] = pointee;
         }
@@ -202,12 +197,7 @@ export default class Vector {
     }
 
     push(v) {
-        if (this.length >= this.capacity) {
-            this.#buffer = this.#allocator.realloc(
-                this.#buffer,
-                this.#buffer.length << 1 || 8
-            );
-        }
+        this.reserve(this.#length + 0x1);
         this.#buffer[this.#length++] = v;
     }
 
