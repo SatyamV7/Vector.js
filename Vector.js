@@ -3,7 +3,7 @@
 export default class Vector {
     #buffer;
     #length = 0;
-    #NULL = 0;
+    #ZERO = 0;
 
     static #PrivilegedKey = Symbol();
 
@@ -96,7 +96,7 @@ export default class Vector {
                   )
                 : this.#buffer;
 
-            this.#NULL = buffer[0] ^ buffer[0];
+            this.#ZERO = buffer[0] ^ buffer[0];
         }
     }
 
@@ -134,7 +134,7 @@ export default class Vector {
     resize(n, ZeroInit) {
         if (!Number.isInteger(n)) return;
         if (n < 0 || n === this.#length) return;
-        const $0 = this.#NULL;
+        const $0 = this.#ZERO;
         if (n > this.#length) {
             const c = Math.min(n, this.#buffer.length);
             if (n > this.#buffer.length) {
