@@ -30,3 +30,7 @@ v0.0.7 <https://github.com/SatyamV7/Vector.js/commit/77c4396134469147584d18e43c2
 v0.0.8 <https://github.com/SatyamV7/Vector.js/commit/cbd7717f41684f93443e247becc79448790549ee>:
 
 - Modified `at()` method to define behaviour regarding read/write mode invocation & `pointee` argument handling.
+
+v0.0.8.1 <https://github.com/SatyamV7/Vector.js/commit/5b27f8debfe3995731176f5c38a8c0e1ac39d729>:
+
+- Intermediate version v0.0.8.1 (includes code refactors & improved README).
