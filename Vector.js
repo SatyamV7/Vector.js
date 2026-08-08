@@ -1,4 +1,4 @@
-// Vector.js v0.0.8.1 <7th August, 2026> - Author: Satyam Verma <github.com/SatyamV7> - License: RPL-1.5
+// Vector.js v0.0.8.2 <8th August, 2026> - Author: Satyam Verma <github.com/SatyamV7> - License: RPL-1.5
 
 export default class Vector {
     #buffer;
@@ -166,15 +166,12 @@ export default class Vector {
             return null;
         }
         if (pointee instanceof this.#buffer.constructor) {
-            const memmov_head = address;
-            const memmov_tail = this.#length;
-            const memmov_target = address + pointee.length;
-            this.reserve(this.#length + pointee.length);
-            this.#buffer.copyWithin(memmov_target, memmov_head, memmov_tail);
+            const c = this.#length;
+            this.reserve((this.#length += pointee.length));
+            this.#buffer.copyWithin(address + pointee.length, address, c);
             this.#buffer.set(pointee, address);
-            this.#length += pointee.length;
         } else {
-            this.reserve(this.length + 0x1);
+            this.reserve(this.#length + +1);
             this.#buffer.copyWithin(address + 1, address, this.#length++);
             this.#buffer[address] = pointee;
         }
