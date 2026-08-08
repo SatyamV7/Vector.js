@@ -34,3 +34,7 @@ v0.0.8 <https://github.com/SatyamV7/Vector.js/commit/cbd7717f41684f93443e247becc
 v0.0.8.1 <https://github.com/SatyamV7/Vector.js/commit/5b27f8debfe3995731176f5c38a8c0e1ac39d729>:
 
 - Intermediate version v0.0.8.1 (includes code refactors & improved README).
+
+v0.0.8.2 <https://github.com/SatyamV7/Vector.js/commit/430dec9b71868a0107d14b9beec99b48f6a8709e>:
+
+- Refactored `insert()` to bypass getter invocation & improved clarity.
